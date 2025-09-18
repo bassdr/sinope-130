@@ -58,7 +58,6 @@ from homeassistant.components.climate.const import (ATTR_TARGET_TEMP_HIGH,
                                                     PRESET_AWAY, PRESET_BOOST,
                                                     PRESET_HOME, PRESET_NONE)
 from homeassistant.components.persistent_notification import (
-    async_create,
     DOMAIN as PN_DOMAIN,
 )
 from homeassistant.components.sensor import SensorDeviceClass
@@ -1706,6 +1705,7 @@ def lock_to_ha(lock):
             return "Tamper protection"
         case "partialLock":
             return "Tamper protection"
+    return None
 
 
 def extract_capability_full(cap):
@@ -1780,6 +1780,7 @@ class Neviweb130Thermostat(ClimateEntity):
         self._heat_level = 0
         self._early_start = None
         self._em_heat = None
+        self._aux_cycle_length = None
         self._fan_speed = None
         self._fan_swing_cap = None
         self._fan_swing_cap_horiz = None
@@ -2333,6 +2334,7 @@ class Neviweb130Thermostat(ClimateEntity):
 
     def set_keypad_lock(self, value):
         """Lock or unlock device's keypad, locked = Locked, unlocked = Unlocked."""
+        lock = None
         if value["lock"] == "locked" and self._is_wifi:
             lock = "lock"
         elif value["lock"] == "partiallyLocked" and self._is_wifi:
@@ -2887,6 +2889,7 @@ class Neviweb130G2Thermostat(Neviweb130Thermostat):
 
     def __init__(self, data, device_info, name, sku, firmware):
         """Initialize."""
+        super().__init__(data, device_info, name, sku, firmware)
         self._name = name
         self._sku = sku
         self._firmware = firmware
@@ -3093,6 +3096,7 @@ class Neviweb130FloorThermostat(Neviweb130Thermostat):
 
     def __init__(self, data, device_info, name, sku, firmware):
         """Initialize."""
+        super().__init__(data, device_info, name, sku, firmware)
         self._name = name
         self._sku = sku
         self._firmware = firmware
@@ -3350,6 +3354,7 @@ class Neviweb130LowThermostat(Neviweb130Thermostat):
 
     def __init__(self, data, device_info, name, sku, firmware):
         """Initialize."""
+        super().__init__(data, device_info, name, sku, firmware)
         self._name = name
         self._sku = sku
         self._firmware = firmware
@@ -3631,6 +3636,7 @@ class Neviweb130DoubleThermostat(Neviweb130Thermostat):
 
     def __init__(self, data, device_info, name, sku, firmware):
         """Initialize."""
+        super().__init__(data, device_info, name, sku, firmware)
         self._name = name
         self._sku = sku
         self._firmware = firmware
@@ -3836,6 +3842,7 @@ class Neviweb130WifiThermostat(Neviweb130Thermostat):
 
     def __init__(self, data, device_info, name, sku, firmware):
         """Initialize."""
+        super().__init__(data, device_info, name, sku, firmware)
         self._name = name
         self._sku = sku
         self._firmware = firmware
@@ -4085,6 +4092,7 @@ class Neviweb130WifiLiteThermostat(Neviweb130Thermostat):
 
     def __init__(self, data, device_info, name, sku, firmware):
         """Initialize."""
+        super().__init__(data, device_info, name, sku, firmware)
         self._name = name
         self._sku = sku
         self._firmware = firmware
@@ -4322,6 +4330,7 @@ class Neviweb130LowWifiThermostat(Neviweb130Thermostat):
 
     def __init__(self, data, device_info, name, sku, firmware):
         """Initialize."""
+        super().__init__(data, device_info, name, sku, firmware)
         self._name = name
         self._sku = sku
         self._firmware = firmware
@@ -4626,6 +4635,7 @@ class Neviweb130WifiFloorThermostat(Neviweb130Thermostat):
 
     def __init__(self, data, device_info, name, sku, firmware):
         """Initialize."""
+        super().__init__(data, device_info, name, sku, firmware)
         self._name = name
         self._sku = sku
         self._firmware = firmware
@@ -4905,6 +4915,7 @@ class Neviweb130HcThermostat(Neviweb130Thermostat):
 
     def __init__(self, data, device_info, name, sku, firmware):
         """Initialize."""
+        super().__init__(data, device_info, name, sku, firmware)
         self._name = name
         self._sku = sku
         self._firmware = firmware
@@ -5197,6 +5208,7 @@ class Neviweb130HPThermostat(Neviweb130Thermostat):
 
     def __init__(self, data, device_info, name, sku, firmware):
         """Initialize."""
+        super().__init__(data, device_info, name, sku, firmware)
         self._name = name
         self._sku = sku
         self._firmware = firmware
@@ -5463,6 +5475,7 @@ class Neviweb130HeatCoolThermostat(Neviweb130Thermostat):
 
     def __init__(self, data, device_info, name, sku, firmware):
         """Initialize."""
+        super().__init__(data, device_info, name, sku, firmware)
         self._name = name
         self._sku = sku
         self._firmware = firmware
@@ -6086,6 +6099,7 @@ class Neviweb130HeatCoolThermostat(Neviweb130Thermostat):
 
     def set_aux_heating_source(self, value):
         """Set auxiliary heating device."""
+        equip = None
         match value["dev"]:
             case "Electric":
                 equip = "hvacElectrique"
@@ -6173,10 +6187,10 @@ class Neviweb130HeatCoolThermostat(Neviweb130Thermostat):
         data.update(
             {
                 "error_code": self._error_code,
-                "operation_modes": self._operation_mode,
-                "cool_setpoint": self._target_cool,
-                "cool_setpoint_min": self._cool_min,
-                "cool_setpoint_max": self._cool_max,
+                "operation modes": self._operation_mode,
+                "cool setpoint": self._target_cool,
+                "cool setpoint min": self._cool_min,
+                "cool setpoint max": self._cool_max,
                 "setpoint_max": self._max_temp,
                 "setpoint_min": self._min_temp,
                 "temperature_format": self._temperature_format,
@@ -6184,7 +6198,7 @@ class Neviweb130HeatCoolThermostat(Neviweb130Thermostat):
                 "keypad": lock_to_ha(self._keypad),
                 "fan_speed": self._fan_speed,
                 "backlight": self._backlight,
-                "backlight_auto_dim": self._backlight_auto_dim,
+                "backlight-auto_dim": self._backlight_auto_dim,
                 "early_start": self._early_start,
                 "target_temp_away": self._target_temp_away,
                 "cool_target_temp_away": self._cool_target_temp_away,
